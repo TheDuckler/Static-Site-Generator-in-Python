@@ -2,6 +2,7 @@ from enum import Enum
 
 from htmlnode import HTMLNode, LeafNode, ParentNode
 
+
 class TextType(Enum):
 	PLAIN = "plain"
 	BOLD = "bold"
@@ -39,3 +40,4 @@ def text_node_to_html_node(text_node):
 		return LeafNode("a", text_node.text, {"href": text_node.url})
 	elif text_node.text_type == TextType.IMAGE:
 		return LeafNode("img", None, {"src": text_node.url, "alt": text_node.text})
+
