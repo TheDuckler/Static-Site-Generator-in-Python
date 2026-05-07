@@ -1,6 +1,6 @@
 import unittest
 
-from splitnodes import split_nodes_delimiter, split_nodes_image, split_nodes_link, text_to_textnodes
+from splitnodes import split_nodes_delimiter, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks, BlockType, block_to_block_type, markdown_to_html_node
 from textnode import TextType, TextNode
 
 
@@ -181,6 +181,220 @@ class TestSplitNodeDelimiter(unittest.TestCase):
                 ]
         self.assertEqual(node, node2)
 
+
+####TEST FOR MARKDOWN TO BLOCKS
+    def test_markdown_to_blocks_eq1(self):
+        md = """
+This is **bolded** paragraph
+
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+        ],
+    )
+
+    def test_markdown_to_blocks_not_eq1(self):
+        md = """
+This is **bolded** paragraph
+
+This is another paragraic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertNotEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+        ],
+    )
+        
+    def test_markdown_to_blocks_eq2(self):
+        md = """
+This is **bolded** paragraph
+
+This is another paragraph with _italic_ text and `code` here
+HEY, IM WALKIN' 'ERE!!!
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nHEY, IM WALKIN' 'ERE!!!\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+        ],
+    )
+        
+    def test_markdown_to_blocks_eq3(self):
+        md = """
+This is **bolded** paragraph
+
+- This is a seperate list
+- with 3 lines
+- here's the third
+
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "- This is a seperate list\n- with 3 lines\n- here's the third",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+        ],
+    )
+        
+    def test_markdown_to_blocks_eq4(self):
+        md = """
+# Heading Alert!!
+
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "# Heading Alert!!",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+        ],
+    )
+
+
+####TEST FOR BLOCK TO BLOCK TYPE
+    def test_block_to_block_type_eq1(self):
+        block = "# Heading Alert!!"
+        self.assertEqual(block_to_block_type(block), BlockType.HEADINGS)
+
+    def test_block_to_block_type_eq2(self):
+        block = "```\nThis is a code block\n```"
+        self.assertEqual(block_to_block_type(block), BlockType.CODE_BLOCKS)
+
+    def test_block_to_block_type_eq3(self):
+        block = "> This is a quote block"
+        self.assertEqual(block_to_block_type(block), BlockType.QUOTE_BLOCKS)
+
+    def test_block_to_block_type_eq4(self):
+        block = "- This is an unordered list item\n- This is another unordered list item"
+        self.assertEqual(block_to_block_type(block), BlockType.UNORDERED_LISTS)
+
+    def test_block_to_block_type_eq5(self):
+        block = "1. This is an ordered list item\n2. This is another ordered list item"
+        self.assertEqual(block_to_block_type(block), BlockType.ORDERED_LISTS)
+
+
+####TEST MARKDOWN TO HTML NODE
+    def test_paragraphs(self):
+        md = """
+    This is **bolded** paragraph
+    text in a p
+    tag here
+
+    This is another paragraph with _italic_ text and `code` here
+
+    """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><p>This is <b>bolded</b> paragraph text in a p tag here</p><p>This is another paragraph with <i>italic</i> text and <code>code</code> here</p></div>",
+        )
+
+    def test_codeblock(self):
+        md = """
+    ```
+    This is text that _should_ remain
+    the **same** even with inline stuff
+    ```
+    """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre></div>",
+    )
+        
+    def test_quote_block(self):
+        md = """
+    > This is a quote block
+    > with multiple lines
+
+    > and some **inline** stuff that _should_ be parsed
+
+    """
+        
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><blockquote>This is a quote block\nwith multiple lines</blockquote><blockquote>and some <b>inline</b> stuff that <i>should</i> be parsed</blockquote></div>",
+        )
+
+    def test_heading_and_lists(self):
+        md = """
+    ## Heading Alert!!
+
+    - Here is a list
+    - with multiple items
+    - and some **bold** text
+
+    """
+        
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h2>Heading Alert!!</h2><ul><li>Here is a list</li><li>with multiple items</li><li>and some <b>bold</b> text</li></ul></div>",
+        )
+
+
+    def test_heading_and_orderred_lists(self):
+        md = """
+    ## Heading Alert!!
+
+    1. Here is a list
+    2. with multiple items
+    3. and some **bold** text
+
+    """
+        
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h2>Heading Alert!!</h2><ol><li>Here is a list</li><li>with multiple items</li><li>and some <b>bold</b> text</li></ol></div>",
+        )
 
 if __name__ == "__main__":
     unittest.main()
