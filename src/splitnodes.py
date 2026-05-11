@@ -142,6 +142,7 @@ def block_to_block_type(block):
 
 def text_to_children(text):
     text_nodes = text_to_textnodes(text)
+    #print("TEXT:", repr(text)) #Test for Error Placement#
     html_nodes = [text_node_to_html_node(text_node) for text_node in text_nodes]
     return html_nodes
 
@@ -178,11 +179,11 @@ def markdown_to_html_node(markdown):
             list_item = 0
             for item in lines:
                 if list_item == 0:
-                    list_items.append(item.strip())
+                    list_items.append(item[2:].strip())
                     list_item += 1
                 else:
                     list_items.append(item[2:].strip())
-            html_nodes.append(ParentNode("ul", [ParentNode("li", text_to_children(item[2:].strip())) for item in list_items]))
+            html_nodes.append(ParentNode("ul", [ParentNode("li", text_to_children(item.strip())) for item in list_items]))
 
         elif block_type == BlockType.ORDERED_LISTS:
             split_block = block.split("\n")
