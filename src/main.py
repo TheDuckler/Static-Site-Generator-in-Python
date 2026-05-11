@@ -7,16 +7,21 @@ from htmlnode import HTMLNode, LeafNode, ParentNode
 from splitnodes import split_nodes_delimiter, split_nodes_image, split_nodes_link, markdown_to_html_node
 from extractmarkdown import extract_markdown_images, extract_markdown_links
 
+if len(sys.argv) > 1:
+	basepath = sys.argv[1]
+else:
+	basepath = "/"
+
 
 def main():
-	node = TextNode("this is text", TextType.LINK, "this is url")
-	message = node.__repr__()
+	#node = TextNode("this is text", TextType.LINK, "this is url")
+	#message = node.__repr__()
 	#print(message)
 
-	copy_directory("static", "public")
+	copy_directory("static", "docs")
 
 	#generate_page("content/index.md", "template.html", "public/index.html")
-	generate_pages_recursive("content", "template.html", "public")
+	generate_pages_recursive("content", "template.html", "docs")
 
 
 
@@ -63,6 +68,8 @@ def generate_page(from_path, template_path, dest_path):
 
 	template_path_var = template_path_var.replace("{{ Content }}", html_string)
 	template_path_var = template_path_var.replace("{{ Title }}", title)
+	template_path_var = template_path_var.replace('href="/', f'href="{basepath}')
+	template_path_var = template_path_var.replace('href="/', f'href="{basepath}')
 
 	if not os.path.exists(os.path.dirname(dest_path)):
 		os.makedirs(os.path.dirname(dest_path))
